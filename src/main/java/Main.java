@@ -34,6 +34,7 @@ public class Main {
                 int size = scan.getIsolations().size();
                 if (size > 0) {
                     double number = scan.getIsolations().get(0).getPrecursorMz();
+                    //tolerancia
                     boolean comp1 = Math.abs(number-precursorMz)<0.1;
                     if (scan.getMsLevel() == 2 && (comp1)) {
                         // Print the scan properties
@@ -52,5 +53,28 @@ public class Main {
         } catch (MSDKException e) {
             e.printStackTrace();
         }
+    }
+    /**
+     * Returns the ppm difference between measured mass and theoretical mass
+     *
+     * @param measuredMass Mass measured by MS
+     * @param theoreticalMass Theoretical mass of the compound
+     */
+    public static int calculatePPMIncrement(Double measuredMass, Double theoreticalMass) {
+        int ppmIncrement;
+        ppmIncrement = (int) Math.round(Math.abs((measuredMass - theoreticalMass) * 1000000
+                / theoreticalMass));
+        return ppmIncrement;
+    }
+    /**
+     * Returns the tolerance in Daltons for a
+     *
+     * @param theoreticalMass mass of the compound of interest
+     * @param tolerancePPM Tolerance allowed for the mass spectrometer
+     */
+    public static double calculateToleranceFromPPM(Double theoreticalMass, Integer tolerancePPM) {
+        double range;
+        range = theoreticalMass * (tolerancePPM/1000000);
+        return range;
     }
 }
