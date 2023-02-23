@@ -36,14 +36,27 @@ public class Main {
                     double number = scan.getIsolations().get(0).getPrecursorMz();
                     //tolerancia
                     boolean comp1 = Math.abs(number-precursorMz)<0.1;
+
                     if (scan.getMsLevel() == 2 && (comp1)) {
                         // Print the scan properties
+
+                        float[] intensity_values = scan.getIntensityValues();
+                        /*for(int k=0; k<intensity_values.length; k++){
+                            System.out.print(intensity_values[k] + "--");
+                        }*/
+                        double maximum_intensity = maximum_value(intensity_values);
+                        double values_taken_from = 0.01*maximum_intensity;
+                        System.out.println("---------"+values_taken_from);
+
                         System.out.println("Retention time: " + scan.getRetentionTime());
                         System.out.println("Precursor m/z: " + scan.getIsolations().get(0).getPrecursorMz());
                         System.out.println("Number of data points: " + scan.getNumberOfDataPoints());
                         // Print the data points
                         for (int j = 0; j < scan.getNumberOfDataPoints(); j++) {
-                            System.out.println("m/z: " + scan.getMzValues()[j] + " intensity: " + scan.getIntensityValues()[j]);
+                            boolean comp2 =  scan.getIntensityValues()[j] >= values_taken_from;
+                            if (comp2) {
+                                System.out.println("m/z: " + scan.getMzValues()[j] + " intensity: " + scan.getIntensityValues()[j]);
+                            }
                         }
                     }
                 }
@@ -54,6 +67,21 @@ public class Main {
             e.printStackTrace();
         }
     }
+    /*public static void peaks (double precursorMz, double tolerance, String tolerance_type){
+
+
+    }*/
+    //returns the maximum intensity within the fragment
+    public static double maximum_value (float[] array){
+        float max_value = 0;
+        for (int i = 0; i< array.length; i++){
+            if(array[i] > max_value){
+                max_value = array[i];
+            }
+        }
+        return max_value;
+    }
+
     /**
      * Returns the ppm difference between measured mass and theoretical mass
      *
