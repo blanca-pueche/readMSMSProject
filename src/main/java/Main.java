@@ -23,48 +23,6 @@ public class Main {
 
         try {
             getSpectrumFromMZML(pathFile, precursorMz, 10);
-           /* // Import the mzXML file
-            MzXMLFileImportMethod importer = new MzXMLFileImportMethod(file);
-            RawDataFile rawFile = importer.execute();
-
-
-            // Get the number of scans
-            int numScans = rawFile.getScans().size();
-            System.out.println("num of scans: " + numScans);
-
-            // Iterate through the scans
-            for (int i = 0; i < numScans; i++) {
-                MsScan scan = rawFile.getScans().get(i);
-                int size = scan.getIsolations().size();
-                if (size > 0) {
-                    double number = scan.getIsolations().get(0).getPrecursorMz();
-                    //tolerancia
-                    double tolerance = 0.1;
-                    boolean comp1 = Math.abs(number-precursorMz)<tolerance;
-
-                    if (scan.getMsLevel() == 2 && (comp1)) {
-                        // Print the scan properties
-
-                        float[] intensity_values = scan.getIntensityValues();
-
-                        double maximum_intensity = maximum_value(intensity_values);
-                        double values_taken_from = 0.01*maximum_intensity;
-                        System.out.println("------------------------------------------------"+values_taken_from);
-
-                        System.out.println("Retention time: " + scan.getRetentionTime());
-                        System.out.println("Precursor m/z: " + scan.getIsolations().get(0).getPrecursorMz());
-                        System.out.println("Number of data points: " + scan.getNumberOfDataPoints());
-                        // Print the data points
-                        for (int j = 0; j < scan.getNumberOfDataPoints(); j++) {
-                            boolean comp2 =  scan.getIntensityValues()[j] >= values_taken_from;
-                            if (comp2) {
-                                System.out.println("m/z: " + scan.getMzValues()[j] + " intensity: " + scan.getIntensityValues()[j]);
-                            }
-                        }
-                    }
-                }
-            }
-            */
 
         } catch (MSDKException e) {
             e.printStackTrace();
@@ -152,50 +110,77 @@ public class Main {
     }
 
     public static Spectrum getSpectrumRelativeIntensity (Spectrum spectrumNoFilters, int mileage) throws IllegalArgumentException{
+        List<Peak> listaPicos = null;
+        Peak pico;
         if (mileage < 0 || mileage >1000){
             IllegalArgumentException ex = new IllegalArgumentException();
             throw ex;
         }
-        double maxIntensity = 0;
-        for (int i=0; i<spectrumNoFilters.peakList.size(); i++){
-            if (spectrumNoFilters.peakList.get(i).intensity > maxIntensity){
-                maxIntensity = spectrumNoFilters.peakList.get(i).intensity;
-            }
-        }
+        double maxIntensity = max_value(spectrumNoFilters);
         double value = maxIntensity*(mileage/100);
         for (int i=0; i<spectrumNoFilters.peakList.size(); i++){
             if (spectrumNoFilters.peakList.get(i).intensity < value){
-                spectrumNoFilters.peakList.remove(i);
+                pico = new Peak(spectrumNoFilters.peakList.get(i).mz, spectrumNoFilters.peakList.get(i).intensity);
+                listaPicos.add(pico);
             }
         }
-        return spectrumNoFilters;
+        Spectrum spectrum = new Spectrum(spectrumNoFilters.precursorMz, listaPicos);
+        return spectrum;
     }
 
-    public static Spectrum getSpectrumRelativeIntensity (Spectrum spectrumNoFilters, double threshold) throws IllegalArgumentException{
+    public static double max_value (Spectrum spectrum){
+        double maxIntensity = 0;
+        for (int i=0; i<spectrum.peakList.size(); i++){
+            if (spectrum.peakList.get(i).intensity > maxIntensity){
+                maxIntensity = spectrum.peakList.get(i).intensity;
+            }
+        }
+        return maxIntensity;
+    }
+
+    public static Spectrum getSpectrumAboveThreshold (Spectrum spectrumNoFilters, double threshold) throws IllegalArgumentException{
         try{
+            List<Peak> listaPicos = null;
+            Peak pico;
             for (int i = 0; i< spectrumNoFilters.peakList.size(); i++){
                 if (spectrumNoFilters.peakList.get(i).intensity < threshold){
-                    spectrumNoFilters.peakList.remove(i);
+                    pico = new Peak(spectrumNoFilters.peakList.get(i).mz, spectrumNoFilters.peakList.get(i).intensity);
+                    listaPicos.add(pico);
                 }
             }
-            return spectrumNoFilters;
+            Spectrum spectrum = new Spectrum(spectrumNoFilters.precursorMz, listaPicos);
+            return spectrum;
         }catch(IllegalArgumentException ex){
             throw ex;
         }
     }
 
-    public static Spectrum getSpectrumRelativeIntensity1 (Spectrum spectrumNoFilters, int topNPeaks) throws IllegalArgumentException{
+    public static Spectrum getSpectrumTopNPeak (Spectrum spectrumNoFilters, int topNPeaks) throws IllegalArgumentException{
         try{
+            List<Peak> listaPicos = null;
+            Peak pico;
             int n=0;
             Collections.sort(spectrumNoFilters.peakList, Comparator.comparingDouble(Peak::getIntensity));
             for (int i = spectrumNoFilters.peakList.size(); n < topNPeaks; i--){
-                spectrumNoFilters.peakList.remove(i);
+                pico = new Peak(spectrumNoFilters.peakList.get(i).mz, spectrumNoFilters.peakList.get(i).intensity);
+                listaPicos.add(pico);
                 n++;
             }
-            return spectrumNoFilters;
+            Spectrum spectrum = new Spectrum(spectrumNoFilters.precursorMz, listaPicos);
+            return spectrum;
         }catch(IllegalArgumentException ex){
             throw ex;
         }
     }
+
+    /*public static Spectrum getAverageSpectrum (List<Spectrum> spectrumList) throws IllegalArgumentException{
+        try{
+
+
+
+        }catch(IllegalArgumentException ex){
+            throw ex;
+        }
+    }*/
 
 }
